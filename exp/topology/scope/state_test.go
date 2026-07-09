@@ -22,6 +22,7 @@ import (
 
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -69,6 +70,79 @@ func TestMDUpgrading(t *testing.T) {
 		g.Expect(err).ToNot(HaveOccurred())
 		g.Expect(got).To(BeComparableTo(want))
 	})
+}
+
+func TestMDRollingOut(t *testing.T) {
+	tests := []struct {
+		name string
+		md   *clusterv1.MachineDeployment
+		want bool
+	}{
+		{
+			name: "should return true if RollingOut condition is true",
+			md: builder.MachineDeployment("ns", "md-1").
+				WithGeneration(1).
+				WithStatus(clusterv1.MachineDeploymentStatus{
+					ObservedGeneration: 1,
+					Conditions: []metav1.Condition{
+						{
+							Type:   clusterv1.MachineDeploymentRollingOutCondition,
+							Status: metav1.ConditionTrue,
+						},
+					},
+				}).
+				Build(),
+			want: true,
+		},
+		{
+			name: "should return false if RollingOut condition is false and observedGeneration is up to date",
+			md: builder.MachineDeployment("ns", "md-2").
+				WithGeneration(1).
+				WithStatus(clusterv1.MachineDeploymentStatus{
+					ObservedGeneration: 1,
+					Conditions: []metav1.Condition{
+						{
+							Type:   clusterv1.MachineDeploymentRollingOutCondition,
+							Status: metav1.ConditionFalse,
+						},
+					},
+				}).
+				Build(),
+			want: false,
+		},
+		{
+			name: "should return true if observedGeneration is stale",
+			md: builder.MachineDeployment("ns", "md-3").
+				WithGeneration(2).
+				WithStatus(clusterv1.MachineDeploymentStatus{
+					ObservedGeneration: 1,
+					Conditions: []metav1.Condition{
+						{
+							Type:   clusterv1.MachineDeploymentRollingOutCondition,
+							Status: metav1.ConditionFalse,
+						},
+					},
+				}).
+				Build(),
+			want: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			mdsStateMap := MachineDeploymentsStateMap{
+				tt.md.Name: {Object: tt.md},
+			}
+
+			g.Expect((&MachineDeploymentState{Object: tt.md}).IsRollingOut()).To(Equal(tt.want))
+			if tt.want {
+				g.Expect(mdsStateMap.RollingOut()).To(ConsistOf(tt.md.Name))
+			} else {
+				g.Expect(mdsStateMap.RollingOut()).To(BeEmpty())
+			}
+		})
+	}
 }
 
 func TestMPUpgrading(t *testing.T) {

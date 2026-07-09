@@ -4760,6 +4760,24 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `machineDeployments` _[MachineDeploymentTopology](#machinedeploymenttopology) array_ | machineDeployments is a list of machine deployments in the cluster. |  | MaxItems: 2000 <br />MinItems: 1 <br />Optional: \{\} <br /> |
 | `machinePools` _[MachinePoolTopology](#machinepooltopology) array_ | machinePools is a list of machine pools in the cluster. |  | MaxItems: 2000 <br />MinItems: 1 <br />Optional: \{\} <br /> |
+| `rollout` _[WorkersTopologyRolloutSpec](#workerstopologyrolloutspec)_ | rollout allows you to configure the behavior of rolling updates to the MachineDeployments<br />of the Cluster topology. |  | MinProperties: 1 <br />Optional: \{\} <br /> |
+
+
+#### WorkersTopologyRolloutSpec
+
+
+
+WorkersTopologyRolloutSpec defines the rollout behavior for the workers of a Cluster topology.
+
+_Validation:_
+- MinProperties: 1
+
+_Appears in:_
+- [WorkersTopology](#workerstopology)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `maxConcurrency` _integer_ | maxConcurrency is the maximum number of MachineDeployments that can roll out concurrently<br />due to changes to the Cluster topology (e.g. rotation of a referenced template).<br />MachineDeployments performing a Kubernetes version upgrade count against this limit.<br />If not set, rollouts are not sequenced. |  | Minimum: 1 <br />Optional: \{\} <br /> |
 
 
 

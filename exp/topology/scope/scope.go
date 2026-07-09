@@ -56,6 +56,11 @@ func New(cluster *clusterv1.Cluster) *Scope {
 		maxMDUpgradeConcurrency, _ = strconv.Atoi(concurrency)
 		maxMPUpgradeConcurrency, _ = strconv.Atoi(concurrency)
 	}
+
+	// Determine the maximum rollout concurrency from the Cluster topology.
+	// Note: If not set, MaxConcurrency is 0 and rollout sequencing is disabled.
+	maxMDRolloutConcurrency := int(cluster.Spec.Topology.Workers.Rollout.MaxConcurrency)
+
 	return &Scope{
 		Blueprint: &ClusterBlueprint{},
 		Current: &ClusterState{
@@ -64,6 +69,7 @@ func New(cluster *clusterv1.Cluster) *Scope {
 		UpgradeTracker: NewUpgradeTracker(
 			MaxMDUpgradeConcurrency(maxMDUpgradeConcurrency),
 			MaxMPUpgradeConcurrency(maxMPUpgradeConcurrency),
+			MaxMDRolloutConcurrency(maxMDRolloutConcurrency),
 		),
 		HookResponseTracker: NewHookResponseTracker(),
 	}

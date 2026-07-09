@@ -65,6 +65,28 @@ NAME                                                                            
 machinedeployment.cluster.x-k8s.io/clusterclass-quickstart-linux-workers-XXXX    clusterclass-quickstart   1          1       1         0             Running   7m29s   v1.22.0
 ```
 
+## Sequence rollouts of MachineDeployments
+
+While Kubernetes version upgrades are rolled out to MachineDeployments one at a time, other changes to the Cluster
+topology that trigger a rollout (e.g. a change to a referenced bootstrap or infrastructure machine template) are
+applied to all MachineDeployments in parallel.
+
+To limit how many MachineDeployments can roll out concurrently due to such changes, set
+`spec.topology.workers.rollout.maxConcurrency` on the Cluster object:
+
+```yaml
+spec:
+  topology:
+    workers:
+      rollout:
+        maxConcurrency: 1
+```
+
+MachineDeployments are rolled out in the order they are defined in `spec.topology.workers.machineDeployments`, and
+MachineDeployments performing a Kubernetes version upgrade count against the limit. If the field is not set, rollouts
+are not sequenced. MachineDeployments waiting for their turn are surfaced in the `TopologyReconciled` condition of
+the Cluster.
+
 ## Scale a MachineDeployment
 When using a managed topology scaling of MachineDeployments, both up and down, should be done through the Cluster topology.
 

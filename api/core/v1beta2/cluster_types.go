@@ -107,6 +107,11 @@ const (
 	// not yet completed because the upgrade for at least one of the MachineDeployments has been deferred.
 	ClusterTopologyReconciledMachineDeploymentsUpgradeDeferredReason = "MachineDeploymentsUpgradeDeferred"
 
+	// ClusterTopologyReconciledMachineDeploymentsRolloutPendingReason documents reconciliation of a Cluster topology
+	// not yet completed because the rollout of at least one of the MachineDeployments has been held back
+	// to respect the rollout concurrency limit.
+	ClusterTopologyReconciledMachineDeploymentsRolloutPendingReason = "MachineDeploymentsRolloutPending"
+
 	// ClusterTopologyReconciledMachinePoolsUpgradePendingReason documents reconciliation of a Cluster topology
 	// not yet completed because at least one of the MachinePools is not yet updated to match the desired topology spec.
 	//
@@ -872,6 +877,23 @@ type WorkersTopology struct {
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=2000
 	MachinePools []MachinePoolTopology `json:"machinePools,omitempty"`
+
+	// rollout allows you to configure the behavior of rolling updates to the MachineDeployments
+	// of the Cluster topology.
+	// +optional
+	Rollout WorkersTopologyRolloutSpec `json:"rollout,omitempty,omitzero"`
+}
+
+// WorkersTopologyRolloutSpec defines the rollout behavior for the workers of a Cluster topology.
+// +kubebuilder:validation:MinProperties=1
+type WorkersTopologyRolloutSpec struct {
+	// maxConcurrency is the maximum number of MachineDeployments that can roll out concurrently
+	// due to changes to the Cluster topology (e.g. rotation of a referenced template).
+	// MachineDeployments performing a Kubernetes version upgrade count against this limit.
+	// If not set, rollouts are not sequenced.
+	// +optional
+	// +kubebuilder:validation:Minimum=1
+	MaxConcurrency int32 `json:"maxConcurrency,omitempty"`
 }
 
 // MachineDeploymentTopology specifies the different parameters for a set of worker nodes in the topology.

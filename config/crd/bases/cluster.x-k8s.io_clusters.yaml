@@ -3442,6 +3442,22 @@ spec:
                         x-kubernetes-list-map-keys:
                         - name
                         x-kubernetes-list-type: map
+                      rollout:
+                        description: |-
+                          rollout allows you to configure the behavior of rolling updates to the MachineDeployments
+                          of the Cluster topology.
+                        minProperties: 1
+                        properties:
+                          maxConcurrency:
+                            description: |-
+                              maxConcurrency is the maximum number of MachineDeployments that can roll out concurrently
+                              due to changes to the Cluster topology (e.g. rotation of a referenced template).
+                              MachineDeployments performing a Kubernetes version upgrade count against this limit.
+                              If not set, rollouts are not sequenced.
+                            format: int32
+                            minimum: 1
+                            type: integer
+                        type: object
                     type: object
                 required:
                 - classRef

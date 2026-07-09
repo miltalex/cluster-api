@@ -185,6 +185,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"sigs.k8s.io/cluster-api/api/core/v1beta2.WorkersClass":                                             schema_cluster_api_api_core_v1beta2_WorkersClass(ref),
 		"sigs.k8s.io/cluster-api/api/core/v1beta2.WorkersStatus":                                            schema_cluster_api_api_core_v1beta2_WorkersStatus(ref),
 		"sigs.k8s.io/cluster-api/api/core/v1beta2.WorkersTopology":                                          schema_cluster_api_api_core_v1beta2_WorkersTopology(ref),
+		"sigs.k8s.io/cluster-api/api/core/v1beta2.WorkersTopologyRolloutSpec":                               schema_cluster_api_api_core_v1beta2_WorkersTopologyRolloutSpec(ref),
 	}
 }
 
@@ -7433,10 +7434,37 @@ func schema_cluster_api_api_core_v1beta2_WorkersTopology(ref common.ReferenceCal
 							},
 						},
 					},
+					"rollout": {
+						SchemaProps: spec.SchemaProps{
+							Description: "rollout allows you to configure the behavior of rolling updates to the MachineDeployments of the Cluster topology.",
+							Default:     map[string]interface{}{},
+							Ref:         ref("sigs.k8s.io/cluster-api/api/core/v1beta2.WorkersTopologyRolloutSpec"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"sigs.k8s.io/cluster-api/api/core/v1beta2.MachineDeploymentTopology", "sigs.k8s.io/cluster-api/api/core/v1beta2.MachinePoolTopology"},
+			"sigs.k8s.io/cluster-api/api/core/v1beta2.MachineDeploymentTopology", "sigs.k8s.io/cluster-api/api/core/v1beta2.MachinePoolTopology", "sigs.k8s.io/cluster-api/api/core/v1beta2.WorkersTopologyRolloutSpec"},
+	}
+}
+
+func schema_cluster_api_api_core_v1beta2_WorkersTopologyRolloutSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "WorkersTopologyRolloutSpec defines the rollout behavior for the workers of a Cluster topology.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"maxConcurrency": {
+						SchemaProps: spec.SchemaProps{
+							Description: "maxConcurrency is the maximum number of MachineDeployments that can roll out concurrently due to changes to the Cluster topology (e.g. rotation of a referenced template). MachineDeployments performing a Kubernetes version upgrade count against this limit. If not set, rollouts are not sequenced.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+				},
+			},
+		},
 	}
 }

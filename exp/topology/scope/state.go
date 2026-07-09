@@ -25,6 +25,7 @@ import (
 
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/internal/topology/check"
+	"sigs.k8s.io/cluster-api/util/conditions"
 )
 
 // ClusterState holds all the objects representing the state of a managed Cluster topology.
@@ -79,6 +80,17 @@ func (mds MachineDeploymentsStateMap) Upgrading(ctx context.Context, c client.Re
 	return names, nil
 }
 
+// RollingOut returns the list of the machine deployments that are rolling out.
+func (mds MachineDeploymentsStateMap) RollingOut() []string {
+	names := []string{}
+	for _, md := range mds {
+		if md.IsRollingOut() {
+			names = append(names, md.Object.Name)
+		}
+	}
+	return names
+}
+
 // MachineDeploymentState holds all the objects representing the state of a managed deployment.
 type MachineDeploymentState struct {
 	// Object holds the MachineDeployment object.
@@ -100,6 +112,14 @@ type MachineDeploymentState struct {
 // MachineDeployment has a different version.
 func (md *MachineDeploymentState) IsUpgrading(ctx context.Context, c client.Reader) (bool, error) {
 	return check.IsMachineDeploymentUpgrading(ctx, c, md.Object)
+}
+
+// IsRollingOut determines if the MachineDeployment is rolling out.
+// A MachineDeployment is considered rolling out if its RollingOut condition is true or the controller has not
+// observed the latest generation. If observedGeneration is not set, it is conservatively treated as rolling out.
+func (md *MachineDeploymentState) IsRollingOut() bool {
+	return conditions.IsTrue(md.Object, clusterv1.MachineDeploymentRollingOutCondition) ||
+		md.Object.Status.ObservedGeneration < md.Object.Generation
 }
 
 // MachinePoolsStateMap holds a collection of MachinePool states.
